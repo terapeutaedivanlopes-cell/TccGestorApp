@@ -1,0 +1,9 @@
+{
+  "name": "TCC Gestor App",
+  "short_name": "TCC Gestor",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "scope": "./"
+}

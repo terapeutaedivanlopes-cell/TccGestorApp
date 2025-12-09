@@ -52,23 +52,23 @@ function renderCadastro() {
   const typeLabel = document.createElement('label'); typeLabel.textContent = 'Tipo de atendimento'
   const typeSel = document.createElement('select')
   ;['individual','casal'].forEach(v=>{ const o=document.createElement('option'); o.value=v; o.textContent=v; typeSel.appendChild(o) })
-  typeWrap.appendChild(typeLabel); typeWrap.appendChild(typeSel)
+  typeWrap.appendChild(typeLabel); typeWrap.appendChild(typeSel); const typeHint=document.createElement('div'); typeHint.className='hint'; typeHint.textContent='Individual ou casal'; typeWrap.appendChild(typeHint)
   grid.appendChild(typeWrap)
-  const partnerName = f('Nome parceiro(a)')
+  const partnerName = f('Nome parceiro(a)','text','Nome do parceiro(a) para casal')
   const partnerWrap = document.createElement('div'); partnerWrap.className = 'field'
   const partnerLabel = document.createElement('label'); partnerLabel.textContent = 'Parceiro (selecionar cadastro)'
   const partnerSel = document.createElement('select')
   const existing = store.load('patients')
   partnerSel.appendChild(Object.assign(document.createElement('option'), { value: '', textContent: 'Nenhum' }))
   existing.forEach(pa=>{ const o=document.createElement('option'); o.value=pa.id; o.textContent=pa.name; partnerSel.appendChild(o) })
-  partnerWrap.appendChild(partnerLabel); partnerWrap.appendChild(partnerSel)
+  partnerWrap.appendChild(partnerLabel); partnerWrap.appendChild(partnerSel); const partnerHint=document.createElement('div'); partnerHint.className='hint'; partnerHint.textContent='Selecione o cadastro do parceiro(a)'; partnerWrap.appendChild(partnerHint)
   grid.appendChild(partnerWrap)
   typeSel.addEventListener('change', () => { partnerWrap.style.display = typeSel.value === 'casal' ? '' : 'none' })
   partnerWrap.style.display = 'none'
   const complaint = document.createElement('div'); complaint.className = 'field'
   const cl = document.createElement('label'); cl.textContent = 'Queixa principal'
   const ct = document.createElement('textarea')
-  complaint.appendChild(cl); complaint.appendChild(ct)
+  complaint.appendChild(cl); complaint.appendChild(ct); const cHint=document.createElement('div'); cHint.className='hint'; cHint.textContent='Motivo de busca por atendimento'; complaint.appendChild(cHint)
   p.appendChild(grid); p.appendChild(complaint)
   const actions = document.createElement('div'); actions.className = 'actions'
   const save = document.createElement('button'); save.className = 'btn success'; save.textContent = 'Salvar cadastro'
@@ -156,29 +156,29 @@ function renderPacientes() {
   const editPanel = document.createElement('div'); editPanel.className='panel'
   const et = document.createElement('div'); et.textContent='Editar cadastro'
   const grid = document.createElement('div'); grid.className='grid cols-2'
-  const f = (label, type = 'text') => { const w=document.createElement('div'); w.className='field'; const l=document.createElement('label'); l.textContent=label; const i=document.createElement(type==='textarea'?'textarea':'input'); if(type!=='textarea') i.type=type; w.appendChild(l); w.appendChild(i); grid.appendChild(w); return i }
-  const name = f('Nome')
-  const dob = f('Nascimento', 'date')
-  const sex = f('Sexo')
-  const marital = f('Estado civil')
-  const contact = f('Contato')
-  const cadDate = f('Data de cadastro','date')
+  const f = (label, type = 'text', desc = '') => { const w=document.createElement('div'); w.className='field'; const l=document.createElement('label'); l.textContent=label; const i=document.createElement(type==='textarea'?'textarea':'input'); if(type!=='textarea') i.type=type; w.appendChild(l); w.appendChild(i); if (desc) { const h=document.createElement('div'); h.className='hint'; h.textContent=desc; w.appendChild(h) } grid.appendChild(w); return i }
+  const name = f('Nome','text','Nome completo do paciente')
+  const dob = f('Nascimento','date','Data de nascimento')
+  const sex = f('Sexo','text','Sexo biológico')
+  const marital = f('Estado civil','text','Situação civil atual')
+  const contact = f('Contato','text','Telefone, email ou outro contato')
+  const cadDate = f('Data de cadastro','date','Data de início do tratamento')
   const typeWrap = document.createElement('div'); typeWrap.className = 'field'
   const typeLabel = document.createElement('label'); typeLabel.textContent = 'Tipo de atendimento'
   const typeSel = document.createElement('select'); ['individual','casal'].forEach(v=>{ const o=document.createElement('option'); o.value=v; o.textContent=v; typeSel.appendChild(o) })
-  typeWrap.appendChild(typeLabel); typeWrap.appendChild(typeSel); grid.appendChild(typeWrap)
-  const partnerName = f('Nome parceiro(a)')
+  typeWrap.appendChild(typeLabel); typeWrap.appendChild(typeSel); const typeHint2=document.createElement('div'); typeHint2.className='hint'; typeHint2.textContent='Individual ou casal'; grid.appendChild(typeWrap); typeWrap.appendChild(typeHint2)
+  const partnerName = f('Nome parceiro(a)','text','Nome do parceiro(a) para casal')
   const partnerWrap = document.createElement('div'); partnerWrap.className = 'field'
   const partnerLabel = document.createElement('label'); partnerLabel.textContent = 'Parceiro (selecionar cadastro)'
   const partnerSel = document.createElement('select')
   partnerSel.appendChild(Object.assign(document.createElement('option'), { value: '', textContent: 'Nenhum' }))
   store.load('patients').forEach(pa=>{ const o=document.createElement('option'); o.value=pa.id; o.textContent=pa.name; partnerSel.appendChild(o) })
-  partnerWrap.appendChild(partnerLabel); partnerWrap.appendChild(partnerSel); grid.appendChild(partnerWrap)
+  partnerWrap.appendChild(partnerLabel); partnerWrap.appendChild(partnerSel); const partnerHint2=document.createElement('div'); partnerHint2.className='hint'; partnerHint2.textContent='Selecione o cadastro do parceiro(a)'; grid.appendChild(partnerWrap); partnerWrap.appendChild(partnerHint2)
   typeSel.addEventListener('change', () => { partnerWrap.style.display = typeSel.value === 'casal' ? '' : 'none' })
   partnerWrap.style.display = 'none'
   const complaint = document.createElement('div'); complaint.className = 'field'
   const cl = document.createElement('label'); cl.textContent = 'Queixa principal'
-  const ct = document.createElement('textarea'); complaint.appendChild(cl); complaint.appendChild(ct)
+  const ct = document.createElement('textarea'); complaint.appendChild(cl); complaint.appendChild(ct); const cHint2=document.createElement('div'); cHint2.className='hint'; cHint2.textContent='Motivo de busca por atendimento'; complaint.appendChild(cHint2)
   editPanel.appendChild(et); editPanel.appendChild(grid); editPanel.appendChild(complaint)
   const actions = document.createElement('div'); actions.className='actions'
   const save = document.createElement('button'); save.className='btn success'; save.textContent='Salvar alterações'
@@ -247,24 +247,24 @@ function renderAnamnese() {
   const sl = document.createElement('label'); sl.textContent = 'Paciente'
   const sel = document.createElement('select')
   patients.forEach(pa=>{ const o=document.createElement('option'); o.value=pa.id; o.textContent=pa.name; sel.appendChild(o) })
-  selWrap.appendChild(sl); selWrap.appendChild(sel)
+  selWrap.appendChild(sl); selWrap.appendChild(sel); const sh=document.createElement('div'); sh.className='hint'; sh.textContent='Selecione o paciente alvo'; selWrap.appendChild(sh)
   p.appendChild(selWrap)
   const grid = document.createElement('div'); grid.className = 'grid cols-2'
-  const f = (label, type='text') => { const w=document.createElement('div'); w.className='field'; const l=document.createElement('label'); l.textContent=label; const i=document.createElement(type==='textarea'?'textarea':'input'); if(type!=='textarea') i.type=type; w.appendChild(l); w.appendChild(i); grid.appendChild(w); return i }
-  const medical = f('Histórico médico','textarea')
-  const meds = f('Medicações','textarea')
-  const sleep = f('Sono')
-  const nutrition = f('Nutrição')
-  const stressors = f('Estressores','textarea')
-  const tccSituations = f('Situações gatilho (TCC)','textarea')
-  const tccThoughts = f('Pensamentos automáticos (TCC)','textarea')
-  const tccEmotions = f('Emoções associadas (TCC)','textarea')
-  const tccBehaviors = f('Comportamentos (TCC)','textarea')
-  const tccPhysical = f('Sintomas físicos (TCC)','textarea')
-  const tccCoreBeliefs = f('Crenças centrais (TCC)','textarea')
-  const tccAssumptions = f('Crenças/intermediárias e suposições (TCC)','textarea')
-  const tccProtective = f('Recursos e fatores de proteção (TCC)','textarea')
-  const tccGoals = f('Metas iniciais (TCC)','textarea')
+  const f = (label, type='text', desc='') => { const w=document.createElement('div'); w.className='field'; const l=document.createElement('label'); l.textContent=label; const i=document.createElement(type==='textarea'?'textarea':'input'); if(type!=='textarea') i.type=type; w.appendChild(l); w.appendChild(i); if (desc) { const h=document.createElement('div'); h.className='hint'; h.textContent=desc; w.appendChild(h) } grid.appendChild(w); return i }
+  const medical = f('Histórico médico','textarea','Condições médicas relevantes e histórico')
+  const meds = f('Medicações','textarea','Fármacos em uso')
+  const sleep = f('Sono','text','Qualidade/horas de sono')
+  const nutrition = f('Nutrição','text','Padrões alimentares')
+  const stressors = f('Estressores','textarea','Fatores de estresse atuais')
+  const tccSituations = f('Situações gatilho (TCC)','textarea','Contextos que disparam desconforto')
+  const tccThoughts = f('Pensamentos automáticos (TCC)','textarea','Frases/imagens que surgem')
+  const tccEmotions = f('Emoções associadas (TCC)','textarea','Sentimentos ligados às situações/pensamentos')
+  const tccBehaviors = f('Comportamentos (TCC)','textarea','Respostas comportamentais observadas')
+  const tccPhysical = f('Sintomas físicos (TCC)','textarea','Sinais corporais')
+  const tccCoreBeliefs = f('Crenças centrais (TCC)','textarea','Crenças profundas sobre si/mundo')
+  const tccAssumptions = f('Crenças/intermediárias e suposições (TCC)','textarea','Regras e pressupostos')
+  const tccProtective = f('Recursos e fatores de proteção (TCC)','textarea','Rede de apoio e habilidades')
+  const tccGoals = f('Metas iniciais (TCC)','textarea','Objetivos terapêuticos')
   const actions = document.createElement('div'); actions.className='actions'
   const save = document.createElement('button'); save.className='btn success'; save.textContent='Salvar anamnese'
   let editingId = ''
@@ -321,7 +321,7 @@ function renderEscalas() {
   const sl = document.createElement('label'); sl.textContent='Paciente'
   const sel = document.createElement('select')
   patients.forEach(pa=>{ const o=document.createElement('option'); o.value=pa.id; o.textContent=pa.name; sel.appendChild(o) })
-  selWrap.appendChild(sl); selWrap.appendChild(sel)
+  selWrap.appendChild(sl); selWrap.appendChild(sel); const sh2=document.createElement('div'); sh2.className='hint'; sh2.textContent='Selecione o paciente alvo'; selWrap.appendChild(sh2)
   p.appendChild(selWrap)
   const tabs = document.createElement('div'); tabs.className='tabs'
   const tabKeys = ['BAI','BDI','PSS10','PSS14','ROSENBERG','YSQ','QEP','RIED']
@@ -338,7 +338,7 @@ function renderEscalas() {
   const pssChoiceWrap = document.createElement('div'); pssChoiceWrap.className='field'
   const pcl = document.createElement('label'); pcl.textContent='PSS para composto'
   const psel = document.createElement('select'); ['auto','10','14'].forEach(v=>{ const o=document.createElement('option'); o.value=v; o.textContent=v; psel.appendChild(o) })
-  pssChoiceWrap.appendChild(pcl); pssChoiceWrap.appendChild(psel)
+  pssChoiceWrap.appendChild(pcl); pssChoiceWrap.appendChild(psel); const ph=document.createElement('div'); ph.className='hint'; ph.textContent='Escolha qual PSS usar no composto'; pssChoiceWrap.appendChild(ph)
   settings.appendChild(wTitle); settings.appendChild(wGrid); settings.appendChild(pssChoiceWrap)
   p.appendChild(settings)
   const noteWrap = document.createElement('div'); noteWrap.className='field'
@@ -348,20 +348,29 @@ function renderEscalas() {
   const emailPanel = document.createElement('div'); emailPanel.className='panel'
   const elab = document.createElement('div'); elab.textContent='Enviar escala por email (coleta online)'
   const eGrid = document.createElement('div'); eGrid.className='grid cols-3'
-  const ef = (label) => { const w=document.createElement('div'); w.className='field'; const l=document.createElement('label'); l.textContent=label; const i=document.createElement('input'); i.type='text'; w.appendChild(l); w.appendChild(i); eGrid.appendChild(w); return i }
-  const ePatientName = ef('Nome do paciente')
-  const eEmail = ef('Email destino')
+  const ef = (label, desc = '') => { const w=document.createElement('div'); w.className='field'; const l=document.createElement('label'); l.textContent=label; const i=document.createElement('input'); i.type='text'; w.appendChild(l); w.appendChild(i); if (desc) { const h=document.createElement('div'); h.className='hint'; h.textContent=desc; w.appendChild(h) } eGrid.appendChild(w); return i }
+  const ePatientName = ef('Nome do paciente','Nome que aparecerá no link')
+  const eEmail = ef('Email destino','Email para envio automático das respostas')
+  const eEmailConfirm = ef('Confirmar email destino','Repita o email para validação')
   const eScaleWrap = document.createElement('div'); eScaleWrap.className='field'; const esl=document.createElement('label'); esl.textContent='Escala'; const eScale=document.createElement('select'); ['BAI','BDI','PSS10','PSS14','ROSENBERG','YSQ','QEP','RIED'].forEach(v=>{ const o=document.createElement('option'); o.value=v; o.textContent=v; eScale.appendChild(o) }); eScaleWrap.appendChild(esl); eScaleWrap.appendChild(eScale); eGrid.appendChild(eScaleWrap)
+  const eScaleHint=document.createElement('div'); eScaleHint.className='hint'; eScaleHint.textContent='Selecione a escala a coletar'; eScaleWrap.appendChild(eScaleHint)
   const gen = document.createElement('button'); gen.className='btn'; gen.textContent='Gerar link'
+  const copy = document.createElement('button'); copy.className='btn'; copy.textContent='Copiar link'
   const outLink = document.createElement('div'); outLink.className='field'
   const ol = document.createElement('label'); ol.textContent='Link para envio'
   const oi = document.createElement('input'); oi.type='text'; outLink.appendChild(ol); outLink.appendChild(oi)
   gen.addEventListener('click', () => {
+    if ((eEmail.value||'').trim() !== (eEmailConfirm.value||'').trim()) { alert('Emails não conferem'); return }
     const base = window.location.origin + window.location.pathname
     const url = `${base}?collect=1&scale=${encodeURIComponent(eScale.value)}&patient=${encodeURIComponent(ePatientName.value||'')}&to=${encodeURIComponent(eEmail.value||'')}`
     oi.value = url
   })
-  emailPanel.appendChild(elab); emailPanel.appendChild(eGrid); emailPanel.appendChild(gen); emailPanel.appendChild(outLink)
+  copy.addEventListener('click', () => {
+    const v = oi.value || ''
+    if (!v) { alert('Nenhum link gerado'); return }
+    if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(v).then(()=>alert('Link copiado')).catch(()=>alert('Falha ao copiar')) } else { oi.select(); try { const ok=document.execCommand('copy'); alert(ok?'Link copiado':'Falha ao copiar') } catch { alert('Falha ao copiar') } }
+  })
+  emailPanel.appendChild(elab); emailPanel.appendChild(eGrid); emailPanel.appendChild(gen); emailPanel.appendChild(copy); emailPanel.appendChild(outLink)
   p.appendChild(emailPanel)
   function show(k) {
     area.innerHTML=''
@@ -462,7 +471,7 @@ function renderHistorico() {
   const sl = document.createElement('label'); sl.textContent='Paciente'
   const sel = document.createElement('select')
   patients.forEach(pa=>{ const o=document.createElement('option'); o.value=pa.id; o.textContent=pa.name; sel.appendChild(o) })
-  selWrap.appendChild(sl); selWrap.appendChild(sel)
+  selWrap.appendChild(sl); selWrap.appendChild(sel); const sh3=document.createElement('div'); sh3.className='hint'; sh3.textContent='Selecione o paciente alvo'; selWrap.appendChild(sh3)
   p.appendChild(selWrap)
   const iaPanel = document.createElement('div'); iaPanel.className='panel'
   const iaTitle = document.createElement('div'); iaTitle.textContent='IA: Evolução e Sugestões'
@@ -688,6 +697,40 @@ function renderRelatorios() {
   actions.appendChild(importFile)
   p.appendChild(actions)
   p.appendChild(out)
+  const importPanel = document.createElement('div'); importPanel.className='panel'
+  const ilab = document.createElement('div'); ilab.textContent='Importar respostas (JSON) para o paciente selecionado'
+  const iwrap = document.createElement('div'); iwrap.className='field'
+  const il = document.createElement('label'); il.textContent='Conteúdo JSON'
+  const it = document.createElement('textarea'); it.rows = 6
+  iwrap.appendChild(il); iwrap.appendChild(it)
+  const iActions = document.createElement('div'); iActions.className='actions'
+  const iUpload = document.createElement('input'); iUpload.type='file'; iUpload.accept='.json'
+  const iImport = document.createElement('button'); iImport.className='btn success'; iImport.textContent='Importar respostas'
+  iUpload.addEventListener('change', () => { const f=iUpload.files[0]; if(!f) return; const r=new FileReader(); r.onload=()=>{ it.value=String(r.result||'') }; r.readAsText(f) })
+  iImport.addEventListener('click', () => {
+    try {
+      const payload = JSON.parse(it.value || '{}')
+      const scaleId = String(payload.scale || '')
+      if (!scaleId) return alert('JSON sem campo scale')
+      const def = window.SCALE_DEFS[scaleId]
+      if (!def) return alert('Escala inválida no JSON')
+      const values = Array.isArray(payload.values) ? payload.values.map(v=>Number(v)||0) : []
+      const comp = def.compute(values)
+      const assessment = {}
+      assessment[scaleId] = { values, total: comp.total, nivel: comp.nivel }
+      const patient = store.load('patients').find(p=>p.id===sel.value)
+      const anam = store.load('anamneses').filter(a=>a.patientId===sel.value).slice(-1)[0]
+      const predictive = analyzePredictive(assessment, patient?.chiefComplaint, anam)
+      const entries = store.load('entries')
+      entries.push({ id: uid(), patientId: sel.value, timestamp: Number(payload.timestamp)||Date.now(), assessment, predictive, note: 'Importado via coleta online' })
+      store.save('entries', entries)
+      alert('Respostas importadas')
+      it.value = ''
+    } catch { alert('JSON inválido') }
+  })
+  iActions.appendChild(iUpload); iActions.appendChild(iImport)
+  importPanel.appendChild(ilab); importPanel.appendChild(iwrap); importPanel.appendChild(iActions)
+  p.appendChild(importPanel)
   sel.addEventListener('change', () => { renderGoals(); refreshIA() })
   setTimeout(() => { renderGoals(); refreshIA() }, 0)
   const sessionsWrap = document.createElement('div'); sessionsWrap.className='panel'

@@ -223,6 +223,13 @@ function buildScaleForm(def) {
     lab.textContent = item.label
     const sel = document.createElement('select')
     const labels = getOptionLabels(def.id, item.id)
+    const hint = document.createElement('div')
+    hint.className = 'hint'
+    if (labels.length) {
+      hint.textContent = `${labels[0]} → ${labels[labels.length - 1]}`
+    } else {
+      hint.textContent = `${item.min} até ${item.max}`
+    }
     if (labels.length) {
       labels.forEach((txt, idx) => { const opt=document.createElement('option'); opt.value=String(idx); opt.textContent=txt; sel.appendChild(opt) })
     } else {
@@ -235,6 +242,7 @@ function buildScaleForm(def) {
     })
     controls.push(sel)
     wrap.appendChild(lab)
+    wrap.appendChild(hint)
     wrap.appendChild(sel)
     grid.appendChild(wrap)
   })
