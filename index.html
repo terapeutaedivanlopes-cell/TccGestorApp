@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TCC Gestor App</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+</head>
+<body>
+  <div class="app">
+    <header class="app-header">
+      <h1>TCC Gestor App</h1>
+      <nav class="nav">
+        <button data-view="cadastro">Cadastro</button>
+        <button data-view="pacientes">Pacientes</button>
+        <button data-view="anamnese">Anamnese</button>
+        <button data-view="escalas">Escalas</button>
+        <button data-view="historico">Histórico</button>
+        <button data-view="relatorio">Relatórios</button>
+      </nav>
+    </header>
+    <main id="view-container"></main>
+  </div>
+  <script src="scales.js"></script>
+  <script src="predictive.js"></script>
+  <script src="charts.js"></script>
+  <script src="pdf.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,34 @@
+:root { --bg:#0f172a; --panel:#111827; --muted:#9ca3af; --text:#e5e7eb; --accent:#22c55e; --danger:#ef4444; --primary:#3b82f6 }
+* { box-sizing:border-box }
+html,body { height:100% }
+body { margin:0; font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background:var(--bg); color:var(--text) }
+.app-header { display:flex; align-items:center; justify-content:space-between; padding:16px 24px; border-bottom:1px solid #1f2937 }
+.nav { display:flex; gap:8px }
+.nav button { background:#1f2937; border:1px solid #2b3340; color:var(--text); padding:8px 12px; border-radius:8px; cursor:pointer }
+.nav button:hover { border-color:#3a4454 }
+#view-container { padding:24px }
+.panel { background:var(--panel); border:1px solid #1f2937; border-radius:12px; padding:16px; margin-bottom:16px }
+.grid { display:grid; gap:12px }
+.grid.cols-2 { grid-template-columns:repeat(2, minmax(0, 1fr)) }
+.grid.cols-3 { grid-template-columns:repeat(3, minmax(0, 1fr)) }
+.field { display:flex; flex-direction:column; gap:6px }
+.field label { color:var(--muted); font-size:12px }
+.field input, .field select, .field textarea { width:100%; padding:10px; border-radius:8px; border:1px solid #2b3340; background:#0b1220; color:var(--text) }
+.actions { display:flex; gap:10px; margin-top:12px }
+.btn { padding:10px 14px; border-radius:8px; border:1px solid #2b3340; background:#1f2937; color:var(--text); cursor:pointer }
+.btn.primary { background:var(--primary); border-color:#2a66d8 }
+.btn.success { background:var(--accent); border-color:#199946 }
+.btn.danger { background:var(--danger); border-color:#b91c1c }
+.list { display:flex; flex-direction:column; gap:8px }
+.list-item { display:flex; justify-content:space-between; align-items:center; padding:12px; border:1px solid #1f2937; border-radius:8px; background:#0b1220 }
+.scale-item { display:flex; flex-direction:column; gap:8px; padding:12px; border:1px solid #1f2937; border-radius:10px; background:#0b1220 }
+.score { font-weight:600; color:var(--accent) }
+.tabs { display:flex; gap:8px; margin-bottom:12px }
+.tabs button { background:#0b1220; border:1px solid #1f2937; color:var(--text); padding:8px 12px; border-radius:8px; cursor:pointer }
+.tabs button.active { background:#1f2937 }
+.chart-box { background:#0b1220; border:1px solid #1f2937; border-radius:12px; padding:12px }
+.panel.compact { padding:12px }
+.compact .field label { font-size:11px }
+.compact .list-item { padding:8px; font-size:13px }
+.chart-box.compact { padding:8px }
+.chart-box.compact canvas { height:160px }
