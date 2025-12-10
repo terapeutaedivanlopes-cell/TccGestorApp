@@ -145,3 +145,58 @@ function exportPatientsCatalogPDF() {
 window.exportPatientsCatalogPDF = exportPatientsCatalogPDF
 
 window.exportReportPDF = exportReportPDF
+
+function exportAssignmentsPDF(patient, assignment) {
+  const { jsPDF } = window.jspdf
+  const doc = new jsPDF({ unit: 'pt', format: 'a4' })
+  const margin = 40
+  let y = margin
+  const add = (text, size = 12, bold = false) => { doc.setFont('Helvetica', bold ? 'bold' : 'normal'); doc.setFontSize(size); doc.text(String(text||''), margin, y); y += size + 8 }
+  const line = (h = 14) => { doc.setDrawColor(180); doc.line(margin, y, 555, y); y += h }
+  const box = (title, height = 80) => { add(title, 13, true); doc.setDrawColor(160); doc.rect(margin, y, 515, height); y += height + 12 }
+  add('Plano semanal de exercícios', 16, true)
+  add(`Paciente: ${patient?.name || ''}`)
+  add(`Início da semana: ${assignment?.weekStart || ''}`)
+  add('Objetivos/Observações:')
+  const notes = (assignment?.notes || '').split(/\n/)
+  notes.forEach(t => add(`• ${t}`))
+  if ((assignment?.modules||{}).social) {
+    add('Habilidades sociais / assertividade', 14, true)
+    add('• Treinar pedidos assertivos (usar “eu”, ser específico, propor alternativas)')
+    add('• Treinar dizer “não” com empatia e firmeza')
+    add('• Role-play: feedback construtivo e crítica recebida')
+    line()
+  }
+  if ((assignment?.modules||{}).relax) {
+    add('Relaxamento / Mindfulness', 14, true)
+    add('• Respiração diafragmática 10 minutos, 5x/semana')
+    add('• Varredura corporal (body scan) 2x/semana')
+    add('• Atenção plena 5-4-3-2-1 em momentos de estresse')
+    line()
+  }
+  if ((assignment?.modules||{}).activation) {
+    add('Ativação comportamental / Agendamento', 14, true)
+    add('• Agendar 3 atividades prazerosas e 2 de domínio')
+    add('• Registrar humor antes/depois (0–10)')
+    box('Agenda (data, atividade, prazer, domínio, humor antes/depois)', 120)
+  }
+  if ((assignment?.modules||{}).rpd) {
+    add('RPD – Registro de pensamentos disfuncionais', 14, true)
+    add('• Situação • Pensamento automático • Emoção (0–100%) • Evidências pró/contra • Pensamento alternativo • Reavaliação (0–100%)')
+    box('Tabela RPD (preencher ao longo da semana)', 160)
+  }
+  if ((assignment?.modules||{}).socratic) {
+    add('Questionário socrático', 14, true)
+    const qs = [
+      'Que evidências sustentam este pensamento? Há alternativas?',
+      'Se um amigo estivesse nesta situação, que conselho você daria?',
+      'Qual é o pior, melhor e mais provável cenário? Como lidaria?',
+      'Quais valores/objetivos seus são relevantes aqui?',
+      'Se olhar daqui a 1 ano, como veria esta situação?'
+    ]
+    qs.forEach(q => add(`• ${q}`))
+    box('Respostas às perguntas socráticas', 120)
+  }
+  doc.save(`Exercicios_${(patient?.name || '').replace(/\s+/g,'_')}.pdf`)
+}
+window.exportAssignmentsPDF = exportAssignmentsPDF

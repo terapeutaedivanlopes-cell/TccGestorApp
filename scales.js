@@ -220,7 +220,7 @@ function buildScaleForm(def) {
     const wrap = document.createElement('div')
     wrap.className = 'scale-item'
     const lab = document.createElement('div')
-    lab.textContent = item.label
+    lab.textContent = `${item.id}. ${item.label}`
     const sel = document.createElement('select')
     const labels = getOptionLabels(def.id, item.id)
     const hint = document.createElement('div')
@@ -249,8 +249,22 @@ function buildScaleForm(def) {
   const scoreEl = document.createElement('div')
   scoreEl.className = 'score'
   scoreEl.textContent = 'Score: 0 • Nível:'
+  const quick = document.createElement('div'); quick.className='actions'
+  const btnZero=document.createElement('button'); btnZero.className='btn'; btnZero.textContent='Zerar'
+  const btnMid=document.createElement('button'); btnMid.className='btn'; btnMid.textContent='Meio'
+  const btnMax=document.createElement('button'); btnMax.className='btn'; btnMax.textContent='Máximo'
+  const btnInc=document.createElement('button'); btnInc.className='btn'; btnInc.textContent='Todos +1'
+  const btnDec=document.createElement('button'); btnDec.className='btn'; btnDec.textContent='Todos -1'
+  const applyAll=(valFn)=>{ controls.forEach((sel, idx)=>{ const min = def.items[idx].min ?? 0; const max = def.items[idx].max ?? 3; const v = valFn(min, max); sel.value = String(v); sel.dispatchEvent(new Event('change')) }) }
+  btnZero.addEventListener('click', ()=>applyAll((min)=>min))
+  btnMid.addEventListener('click', ()=>applyAll((min,max)=>Math.round((min+max)/2)))
+  btnMax.addEventListener('click', ()=>applyAll((min,max)=>max))
+  btnInc.addEventListener('click', ()=>{ controls.forEach((sel, idx)=>{ const min = def.items[idx].min ?? 0; const max = def.items[idx].max ?? 3; const cur = Number(sel.value)||min; const next = Math.min(max, cur+1); sel.value = String(next); sel.dispatchEvent(new Event('change')) }) })
+  btnDec.addEventListener('click', ()=>{ controls.forEach((sel, idx)=>{ const min = def.items[idx].min ?? 0; const max = def.items[idx].max ?? 3; const cur = Number(sel.value)||min; const next = Math.max(min, cur-1); sel.value = String(next); sel.dispatchEvent(new Event('change')) }) })
+  quick.appendChild(btnZero); quick.appendChild(btnMid); quick.appendChild(btnMax); quick.appendChild(btnInc); quick.appendChild(btnDec)
   container.appendChild(grid)
   container.appendChild(legend)
+  container.appendChild(quick)
   container.appendChild(scoreEl)
   return { container, controls, scoreEl }
 }

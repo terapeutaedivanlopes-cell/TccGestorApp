@@ -25,6 +25,52 @@ function navInit() {
       render(b.dataset.view)
     })
   })
+  const cs = document.getElementById('close-session')
+  if (cs) {
+    cs.addEventListener('click', () => {
+      try {
+        const payload = {
+          patients: store.load('patients'),
+          anamneses: store.load('anamneses'),
+          entries: store.load('entries'),
+          goals: store.load('goals'),
+          sessions: store.load('sessions'),
+          reports: store.load('reports')
+        }
+        backupToCloud(payload).then(ok => { if (ok) alert('Backup enviado para nuvem') })
+        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
+        const a = document.createElement('a')
+        a.href = URL.createObjectURL(blob)
+        const d = new Date(); const yyyy = d.getFullYear(); const mm = String(d.getMonth()+1).padStart(2,'0'); const dd = String(d.getDate()).padStart(2,'0')
+        a.download = `backup_tcc_gestor_${yyyy}${mm}${dd}.json`
+        document.body.appendChild(a); a.click(); document.body.removeChild(a)
+        setTimeout(() => { alert('Backup baixado. Você pode fechar a aba com segurança.'); window.close() }, 300)
+      } catch { alert('Falha ao gerar backup. Por favor, exporte em Relatórios.') }
+    })
+  }
+  const tt = document.getElementById('toggle-theme')
+  if (tt) {
+    const apply = (mode) => { if (mode === 'light') document.body.classList.add('theme-light'); else document.body.classList.remove('theme-light') }
+    const saved = localStorage.getItem('theme') || 'dark'
+    apply(saved)
+    tt.addEventListener('click', () => { const cur = document.body.classList.contains('theme-light') ? 'light' : 'dark'; const next = cur === 'light' ? 'dark' : 'light'; localStorage.setItem('theme', next); apply(next) })
+  }
+  const ua = document.getElementById('update-app')
+  if (ua && 'serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistration().then(reg => {
+      if (!reg) return
+      const ub = document.getElementById('update-banner')
+      const show = (v) => { ua.style.display = v ? '' : 'none'; if (ub) ub.style.display = v ? '' : 'none' }
+      show(!!reg.waiting)
+      reg.addEventListener('updatefound', () => {
+        const nw = reg.installing
+        nw && nw.addEventListener('statechange', () => { if (nw.state === 'installed' && reg.waiting) show(true) })
+      })
+      ua.addEventListener('click', () => { reg.waiting && reg.waiting.postMessage({ type: 'SKIP_WAITING' }) })
+      navigator.serviceWorker.addEventListener('controllerchange', () => { window.location.reload() })
+      setInterval(() => { reg.update && reg.update() }, 15 * 60 * 1000)
+    })
+  }
   const qs = new URLSearchParams(window.location.search)
   if (qs.get('collect') === '1') { const nav = document.querySelector('.nav'); if (nav) nav.style.display='none'; render('coleta') }
   else render('cadastro')
@@ -330,6 +376,7 @@ function renderEscalas() {
   const area = document.createElement('div')
   p.appendChild(area)
   const forms = {}
+  let currentScale = 'BAI'
   const settings = document.createElement('div'); settings.className = 'panel'
   const wTitle = document.createElement('div'); wTitle.textContent = 'Pesos do composto (0–3) e escolha PSS'
   const wGrid = document.createElement('div'); wGrid.className = 'grid cols-3'
@@ -378,9 +425,53 @@ function renderEscalas() {
     const { container, controls, scoreEl } = buildScaleForm(def)
     forms[k] = { controls, scoreEl }
     area.appendChild(container)
+    currentScale = k
   }
   show('BAI')
   const actions = document.createElement('div'); actions.className='actions'
+  const fillLast = document.createElement('button'); fillLast.className='btn'; fillLast.textContent='Preencher com último'
+  const fillPrev = document.createElement('button'); fillPrev.className='btn'; fillPrev.textContent='Preencher com penúltimo'
+  const clearAll = document.createElement('button'); clearAll.className='btn'; clearAll.textContent='Limpar todos'
+  const avgWrap = document.createElement('div'); avgWrap.className='field'
+  const avgl = document.createElement('label'); avgl.textContent='N últimos'
+  const avgN = document.createElement('input'); avgN.type='number'; avgN.min='1'; avgN.max='10'; avgN.value='3'; avgWrap.appendChild(avgl); avgWrap.appendChild(avgN)
+  const avgBtn = document.createElement('button'); avgBtn.className='btn'; avgBtn.textContent='Média (N)'
+  fillLast.addEventListener('click', () => {
+    const entries = store.load('entries').filter(e=>e.patientId===sel.value)
+    if (!entries.length) { alert('Sem histórico para preencher'); return }
+    const last = entries[entries.length-1]
+    const vals = last.assessment?.[currentScale]?.values || []
+    const ctrls = forms[currentScale]?.controls || []
+    if (!ctrls.length || !vals.length) { alert('Sem valores para esta escala'); return }
+    ctrls.forEach((c, idx) => { if (vals[idx] !== undefined) { c.value = String(vals[idx]); c.dispatchEvent(new Event('change')) } })
+  })
+  fillPrev.addEventListener('click', () => {
+    const entries = store.load('entries').filter(e=>e.patientId===sel.value)
+    if (entries.length < 2) { alert('Sem penúltimo registro'); return }
+    const prev = entries[entries.length-2]
+    const vals = prev.assessment?.[currentScale]?.values || []
+    const ctrls = forms[currentScale]?.controls || []
+    if (!ctrls.length || !vals.length) { alert('Sem valores para esta escala'); return }
+    ctrls.forEach((c, idx) => { if (vals[idx] !== undefined) { c.value = String(vals[idx]); c.dispatchEvent(new Event('change')) } })
+  })
+  clearAll.addEventListener('click', () => {
+    const ctrls = forms[currentScale]?.controls || []
+    const def = SCALE_DEFS[currentScale]
+    ctrls.forEach((c, idx) => { const min = def.items[idx].min ?? 0; c.value = String(min); c.dispatchEvent(new Event('change')) })
+  })
+  avgBtn.addEventListener('click', () => {
+    const n = Math.max(1, Math.min(10, Number(avgN.value)||3))
+    const entries = store.load('entries').filter(e=>e.patientId===sel.value)
+    if (!entries.length) { alert('Sem histórico para média'); return }
+    const slice = entries.slice(-n)
+    const ctrls = forms[currentScale]?.controls || []
+    const def = SCALE_DEFS[currentScale]
+    const L = ctrls.length
+    const sums = new Array(L).fill(0)
+    let counts = new Array(L).fill(0)
+    slice.forEach(e => { const vals = e.assessment?.[currentScale]?.values || []; for (let i=0;i<L;i++){ if (vals[i] !== undefined) { sums[i] += Number(vals[i])||0; counts[i] += 1 } } })
+    ctrls.forEach((c, idx) => { const min = def.items[idx].min ?? 0; const max = def.items[idx].max ?? 3; const mean = counts[idx] ? Math.round(sums[idx]/counts[idx]) : min; const v = Math.max(min, Math.min(max, mean)); c.value = String(v); c.dispatchEvent(new Event('change')) })
+  })
   const save = document.createElement('button'); save.className='btn success'; save.textContent='Salvar avaliação'
   save.addEventListener('click', () => {
     const payload = {}
@@ -415,7 +506,7 @@ function renderEscalas() {
     store.save('reports', reports)
     alert('Relatório IA salvo em Relatórios')
   })
-  actions.appendChild(save); actions.appendChild(report); actions.appendChild(aiBtn)
+  actions.appendChild(fillLast); actions.appendChild(fillPrev); actions.appendChild(clearAll); actions.appendChild(avgWrap); actions.appendChild(avgBtn); actions.appendChild(save); actions.appendChild(report); actions.appendChild(aiBtn)
   p.appendChild(actions)
   return p
 }
@@ -477,7 +568,7 @@ function renderHistorico() {
   const iaTitle = document.createElement('div'); iaTitle.textContent='IA: Evolução e Sugestões'
   const iaBox = document.createElement('div'); iaBox.className='list'
   iaPanel.appendChild(iaTitle); iaPanel.appendChild(iaBox); p.appendChild(iaPanel)
-  const charts = document.createElement('div'); charts.className='grid cols-2'
+  const charts = document.createElement('div'); charts.className='grid cols-4'
   const b1=document.createElement('div'); b1.className='chart-box compact'; const c1=document.createElement('canvas'); b1.appendChild(c1)
   const b2=document.createElement('div'); b2.className='chart-box compact'; const c2=document.createElement('canvas'); b2.appendChild(c2)
   const b3=document.createElement('div'); b3.className='chart-box compact'; const c3=document.createElement('canvas'); b3.appendChild(c3)
@@ -486,14 +577,54 @@ function renderHistorico() {
   const b6=document.createElement('div'); b6.className='chart-box compact'; const c6=document.createElement('canvas'); b6.appendChild(c6)
   const b7=document.createElement('div'); b7.className='chart-box compact'; const c7=document.createElement('canvas'); b7.appendChild(c7)
   charts.appendChild(b1); charts.appendChild(b2); charts.appendChild(b3); charts.appendChild(b4); charts.appendChild(b5); charts.appendChild(b6); charts.appendChild(b7)
-  p.appendChild(charts)
+  
   const predBox = document.createElement('div'); predBox.className='chart-box compact'; const predCanvas=document.createElement('canvas'); predBox.appendChild(predCanvas); p.appendChild(predBox)
   const radarBox = document.createElement('div'); radarBox.className='chart-box compact'
   const rc = document.createElement('canvas'); radarBox.appendChild(rc); p.appendChild(radarBox)
+  const compactGrid = document.createElement('div'); compactGrid.className='grid cols-4'; compactGrid.appendChild(b1); compactGrid.appendChild(b2); compactGrid.appendChild(b3); compactGrid.appendChild(b4); compactGrid.appendChild(b5); compactGrid.appendChild(b6); compactGrid.appendChild(b7)
+  p.appendChild(compactGrid)
   const manage = document.createElement('div'); manage.className='panel'
   const mTitle = document.createElement('div'); mTitle.textContent='Gestão do histórico'
   const mList = document.createElement('div'); mList.className='list'
   manage.appendChild(mTitle); manage.appendChild(mList); p.appendChild(manage)
+  const hActions = document.createElement('div'); hActions.className='actions'
+  const hSave = document.createElement('button'); hSave.className='btn success'; hSave.textContent='Salvar IA em Relatórios'
+  const hExport = document.createElement('button'); hExport.className='btn'; hExport.textContent='Exportar histórico (PDF)'
+  const hConclusion = document.createElement('button'); hConclusion.className='btn primary'; hConclusion.textContent='Conclusão IA (gráficos)'
+  hSave.addEventListener('click', () => {
+    const history = store.load('entries').filter(e=>e.patientId===sel.value)
+    if (!history.length) return alert('Sem histórico para salvar')
+    const last = history[history.length-1]
+    const patient = store.load('patients').find(p=>p.id===sel.value)
+    const anam = store.load('anamneses').filter(a=>a.patientId===sel.value).slice(-1)[0]
+    const text = createAIReportFromPredictive(last.assessment, last.predictive, patient, anam)
+    const reports = store.load('reports')
+    reports.push({ id: uid(), patientId: sel.value, timestamp: Date.now(), approach: last.predictive.focus, text })
+    store.save('reports', reports)
+    alert('IA salva em Relatórios')
+  })
+  hExport.addEventListener('click', () => {
+    const patient = store.load('patients').find(p=>p.id===sel.value)
+    exportAnalyticsPDF(patient)
+  })
+  hConclusion.addEventListener('click', () => {
+    const history = store.load('entries').filter(e=>e.patientId===sel.value)
+    if (!history.length) return alert('Sem histórico')
+    const last = history[history.length-1]
+    const patient = store.load('patients').find(p=>p.id===sel.value)
+    const anam = store.load('anamneses').filter(a=>a.patientId===sel.value).slice(-1)[0]
+    const txt = createAIReportFromPredictive(last.assessment, last.predictive, patient, anam)
+    const box = document.createElement('div'); box.className='panel'; const t=document.createElement('div'); t.textContent='Conclusão IA'; const pre=document.createElement('textarea'); pre.rows=6; pre.value = txt; box.appendChild(t); box.appendChild(pre); p.appendChild(box)
+  })
+  hActions.appendChild(hSave); hActions.appendChild(hExport); hActions.appendChild(hConclusion); p.appendChild(hActions)
+  const shPanel = document.createElement('div'); shPanel.className='panel'
+  const shTitle = document.createElement('div'); shTitle.textContent='Histórico por escala'
+  const shWrap = document.createElement('div'); shWrap.className='field'
+  const shl=document.createElement('label'); shl.textContent='Escala'
+  const shSel=document.createElement('select')
+  shWrap.appendChild(shl); shWrap.appendChild(shSel)
+  const shList=document.createElement('div'); shList.className='list'
+  shPanel.appendChild(shTitle); shPanel.appendChild(shWrap); shPanel.appendChild(shList); p.appendChild(shPanel)
   const refresh = () => {
     const history = store.load('entries').filter(e=>e.patientId===sel.value)
     if (!history.length) return
@@ -509,6 +640,58 @@ function renderHistorico() {
     const row4=document.createElement('div'); row4.className='list-item'; row4.textContent=`Terapia do Esquema: ${schema.focus}`; iaBox.appendChild(row4)
     if (schema.flags?.length) { const s=document.createElement('div'); s.className='list-item'; s.textContent=`Sugestões Esquemas: ${schema.flags.join(' | ')}`; iaBox.appendChild(s) }
     renderPredictiveComposite(predCanvas, history)
+    const analytics = document.createElement('div'); analytics.className='panel'
+    const at = document.createElement('div'); at.textContent='Predição analítica por gráficos'
+    const aList = document.createElement('div'); aList.className='list'
+    const lastPSS = Math.max(last.assessment.PSS10?.total||0, last.assessment.PSS14?.total||0)
+    const rowA = document.createElement('div'); rowA.className='list-item'; rowA.textContent = `Correlação ansiedade/estresse: BAI ${last.assessment.BAI.total} • PSS ${lastPSS}`
+    const rowB = document.createElement('div'); rowB.className='list-item'; rowB.textContent = `Relação depressão/autoestima: BDI ${last.assessment.BDI.total} • Rosenberg ${last.assessment.ROSENBERG.total}`
+    const rowC = document.createElement('div'); rowC.className='list-item'; rowC.textContent = `Esquemas e estilos: YSQ ${last.assessment.YSQ?.total||0} • QEP ${last.assessment.QEP?.total||0} • RIED ${last.assessment.RIED?.total||0}`
+    aList.appendChild(rowA); aList.appendChild(rowB); aList.appendChild(rowC)
+    analytics.appendChild(at); analytics.appendChild(aList); p.appendChild(analytics)
+    const cross = document.createElement('div'); cross.className='panel'
+    const ct = document.createElement('div'); ct.textContent='Cruzamento escalas × anamnese'
+    const cList = document.createElement('div'); cList.className='list'
+    const anaText = [anam?.tccSituations||'', anam?.tccThoughts||'', anam?.tccCoreBeliefs||''].filter(Boolean).join(' • ')
+    const cr1 = document.createElement('div'); cr1.className='list-item'; cr1.textContent = `Gatilhos e pensamentos: ${anaText || '—'}`
+    const cr2 = document.createElement('div'); cr2.className='list-item'; cr2.textContent = `Força dos sinais: Ansiedade ${last.assessment.BAI.total} • Depressão ${last.assessment.BDI.total} • Estresse ${lastPSS}`
+    const cr3 = document.createElement('div'); cr3.className='list-item'; cr3.textContent = `Foco TCC sugerido: ${last.predictive.focus}`
+    cList.appendChild(cr1); cList.appendChild(cr2); cList.appendChild(cr3)
+    cross.appendChild(ct); cross.appendChild(cList); p.appendChild(cross)
+    const heat = document.createElement('div'); heat.className='panel'
+    const ht = document.createElement('div'); ht.textContent='Mapa de calor: escalas × anamnese'
+    const grid = document.createElement('div'); grid.style.display='grid'; grid.style.gridTemplateColumns='150px repeat(6, 1fr)'; grid.style.gap='6px'
+    const scales = [
+      { k:'BAI', v:last.assessment.BAI.total, max:63, label:'BAI' },
+      { k:'BDI', v:last.assessment.BDI.total, max:63, label:'BDI' },
+      { k:'PSS', v:lastPSS, max:(last.assessment.PSS14?.total!==undefined?56:40), label:'PSS' },
+      { k:'ROS', v:last.assessment.ROSENBERG.total, max:30, label:'Rosenberg' },
+      { k:'YSQ', v:last.assessment.YSQ?.total||0, max:50, label:'YSQ' },
+      { k:'QEP', v:last.assessment.QEP?.total||0, max:32, label:'QEP' }
+    ]
+    const fields = [
+      { k:'sit', v:(anam?.tccSituations||'').length },
+      { k:'pens', v:(anam?.tccThoughts||'').length },
+      { k:'cren', v:(anam?.tccCoreBeliefs||'').length },
+      { k:'ass', v:(anam?.tccAssumptions||'').length },
+      { k:'prot', v:(anam?.tccProtective||'').length }
+    ]
+    const h0=document.createElement('div'); h0.textContent='Anamnese'; h0.style.fontWeight='600'; grid.appendChild(h0)
+    scales.forEach(s => { const h=document.createElement('div'); h.textContent=s.label; h.style.fontWeight='600'; grid.appendChild(h) })
+    fields.forEach(f => {
+      const row = document.createElement('div'); row.style.display='contents'
+      const fl=document.createElement('div'); fl.textContent=f.k; fl.style.fontWeight='600'; grid.appendChild(fl)
+      scales.forEach(s => {
+        const sv = Math.max(0, Math.min(1, (s.v||0)/s.max))
+        const fv = Math.max(0, Math.min(1, (f.v||0)/200))
+        const v = Math.round(sv*fv*100)
+        const cell = document.createElement('div'); cell.textContent=String(v)
+        cell.style.textAlign='center'; cell.style.padding='6px'; cell.style.borderRadius='6px'
+        cell.style.backgroundColor = `rgba(34,197,94,${Math.min(0.9, v/100)})`
+        grid.appendChild(cell)
+      })
+    })
+    heat.appendChild(ht); heat.appendChild(grid); p.appendChild(heat)
     if (patient?.partnerId) {
       const ph = store.load('entries').filter(e=>e.patientId===patient.partnerId)
       if (ph.length) {
@@ -520,6 +703,42 @@ function renderHistorico() {
       renderHistoryCharts({ bai: c1, bdi: c2, pss: c3, ros: c4, ysq: c5, qep: c6, ried: c7 }, history)
     }
     renderRadar(rc, history[history.length-1].assessment)
+    const scalesAvail = Object.keys(history[history.length-1].assessment || {})
+    shSel.innerHTML=''
+    scalesAvail.forEach(k=>{ const o=document.createElement('option'); o.value=k; o.textContent=k; shSel.appendChild(o) })
+    const renderScaleHist = () => {
+      const sk = shSel.value || scalesAvail[0]
+      shList.innerHTML=''
+      history.forEach(h => {
+        const a = h.assessment?.[sk]
+        const li=document.createElement('div'); li.className='list-item'
+        const left=document.createElement('div'); left.textContent=`${new Date(h.timestamp).toLocaleDateString()} • total ${a?.total ?? 0}`
+        const right=document.createElement('div')
+        const cmp=document.createElement('button'); cmp.className='btn'; cmp.textContent='Comparar com atual'
+        cmp.addEventListener('click', () => {
+          const latest = history[history.length-1].assessment?.[sk]
+          const vals = a?.values || []
+          const lvals = latest?.values || []
+          const def = SCALE_DEFS[sk]
+          const diffBox=document.createElement('div'); diffBox.className='panel'
+          const dl=document.createElement('div'); dl.textContent=`Diferenças em ${sk}`
+          const dlist=document.createElement('div'); dlist.className='list'
+          def.items.forEach((it, idx) => {
+            const v=vals[idx]; const lv=lvals[idx]
+            if (v===undefined || lv===undefined) return
+            if (v===lv) return
+            const row=document.createElement('div'); row.className='list-item'; row.textContent=`${it.id}. ${it.label} • antes ${v} → agora ${lv}`
+            dlist.appendChild(row)
+          })
+          diffBox.appendChild(dl); diffBox.appendChild(dlist); p.appendChild(diffBox)
+        })
+        right.appendChild(cmp)
+        li.appendChild(left); li.appendChild(right)
+        shList.appendChild(li)
+      })
+    }
+    shSel.addEventListener('change', renderScaleHist)
+    renderScaleHist()
     mList.innerHTML=''
     history.forEach(h => {
       const li=document.createElement('div'); li.className='list-item'
@@ -697,6 +916,57 @@ function renderRelatorios() {
   actions.appendChild(importFile)
   p.appendChild(actions)
   p.appendChild(out)
+  const cloudPanel = document.createElement('div'); cloudPanel.className='panel'
+  const ct = document.createElement('div'); ct.textContent='Backup em nuvem'
+  const cGrid = document.createElement('div'); cGrid.className='grid cols-2'
+  const cf = (label) => { const w=document.createElement('div'); w.className='field'; const l=document.createElement('label'); l.textContent=label; const i=document.createElement('input'); i.type='text'; w.appendChild(l); w.appendChild(i); cGrid.appendChild(w); return i }
+  const cTypeWrap = document.createElement('div'); cTypeWrap.className='field'; const cTypeLabel=document.createElement('label'); cTypeLabel.textContent='Tipo'; const cType=document.createElement('select'); ['webdav','http_post'].forEach(v=>{ const o=document.createElement('option'); o.value=v; o.textContent=v; cType.appendChild(o) }); cTypeWrap.appendChild(cTypeLabel); cTypeWrap.appendChild(cType); cGrid.appendChild(cTypeWrap)
+  const cEndpoint = cf('Endpoint')
+  const cUser = cf('Usuário')
+  const cPass = cf('Senha')
+  const cPath = cf('Diretório/pasta')
+  const cloudActions = document.createElement('div'); cloudActions.className='actions'
+  const cSave = document.createElement('button'); cSave.className='btn'; cSave.textContent='Salvar configuração'
+  const cBackup = document.createElement('button'); cBackup.className='btn success'; cBackup.textContent='Backup para nuvem'
+  const cImport = document.createElement('button'); cImport.className='btn'; cImport.textContent='Importar da nuvem'
+  const latestWrap = document.createElement('div'); latestWrap.className='field'; const ll=document.createElement('label'); ll.textContent='Manter arquivo latest'; const latest=document.createElement('select'); ['nao','sim'].forEach(v=>{ const o=document.createElement('option'); o.value=v; o.textContent=v; latest.appendChild(o) }); latestWrap.appendChild(ll); latestWrap.appendChild(latest); cGrid.appendChild(latestWrap)
+  const loadCloud = () => { const s = store.load('cloudSettings') || {}; cType.value = s.type || 'webdav'; cEndpoint.value = s.endpoint || ''; cUser.value = s.user || ''; cPass.value = s.pass || ''; cPath.value = s.path || ''; latest.value = s.latest ? 'sim' : 'nao' }
+  const buildPayload = () => ({ patients: store.load('patients'), anamneses: store.load('anamneses'), entries: store.load('entries'), goals: store.load('goals'), sessions: store.load('sessions'), reports: store.load('reports') })
+  cSave.addEventListener('click', () => { store.save('cloudSettings', { type: cType.value, endpoint: cEndpoint.value, user: cUser.value, pass: cPass.value, path: cPath.value, latest: latest.value === 'sim' }); alert('Configuração salva') })
+  cBackup.addEventListener('click', async () => { const ok = await backupToCloud(buildPayload()); alert(ok ? 'Backup enviado' : 'Falha no envio') })
+  cImport.addEventListener('click', async () => { const data = await importFromCloud(); if (!data) { alert('Falha ao importar'); return } const keys = ['patients','anamneses','entries','goals','sessions','reports']; keys.forEach(k => { if (data[k] !== undefined) localStorage.setItem(k, JSON.stringify(data[k])) }); alert('Backup importado da nuvem') })
+  cloudActions.appendChild(cSave); cloudActions.appendChild(cBackup); cloudActions.appendChild(cImport)
+  cloudPanel.appendChild(ct); cloudPanel.appendChild(cGrid); cloudPanel.appendChild(cloudActions)
+  p.appendChild(cloudPanel)
+  loadCloud()
+  const assignPanel = document.createElement('div'); assignPanel.className='panel'
+  const at = document.createElement('div'); at.textContent='Plano semanal de exercícios'
+  const aGrid = document.createElement('div'); aGrid.className='grid cols-3'
+  const af = (label, type='text') => { const w=document.createElement('div'); w.className='field'; const l=document.createElement('label'); l.textContent=label; const i=document.createElement(type==='textarea'?'textarea':'input'); if(type!=='textarea') i.type=type; w.appendChild(l); w.appendChild(i); aGrid.appendChild(w); return i }
+  const wkStart = af('Início da semana','date')
+  const ssWrap = document.createElement('div'); ssWrap.className='field'; const ssl=document.createElement('label'); ssl.textContent='Habilidades sociais / assertividade'; const ssSel=document.createElement('select'); ['nao','sim'].forEach(v=>{ const o=document.createElement('option'); o.value=v; o.textContent=v; ssSel.appendChild(o) }); ssWrap.appendChild(ssl); ssWrap.appendChild(ssSel); aGrid.appendChild(ssWrap)
+  const relaxWrap = document.createElement('div'); relaxWrap.className='field'; const rl=document.createElement('label'); rl.textContent='Relaxamento / Mindfulness'; const relaxSel=document.createElement('select'); ['nao','sim'].forEach(v=>{ const o=document.createElement('option'); o.value=v; o.textContent=v; relaxSel.appendChild(o) }); relaxWrap.appendChild(rl); relaxWrap.appendChild(relaxSel); aGrid.appendChild(relaxWrap)
+  const actWrap = document.createElement('div'); actWrap.className='field'; const al=document.createElement('label'); al.textContent='Ativação comportamental / agendamento'; const actSel=document.createElement('select'); ['nao','sim'].forEach(v=>{ const o=document.createElement('option'); o.value=v; o.textContent=v; actSel.appendChild(o) }); actWrap.appendChild(al); actWrap.appendChild(actSel); aGrid.appendChild(actWrap)
+  const rpdWrap = document.createElement('div'); rpdWrap.className='field'; const rl2=document.createElement('label'); rl2.textContent='RPD (registro de pensamentos)'; const rpdSel=document.createElement('select'); ['nao','sim'].forEach(v=>{ const o=document.createElement('option'); o.value=v; o.textContent=v; rpdSel.appendChild(o) }); rpdWrap.appendChild(rl2); rpdWrap.appendChild(rpdSel); aGrid.appendChild(rpdWrap)
+  const socWrap = document.createElement('div'); socWrap.className='field'; const sl2=document.createElement('label'); sl2.textContent='Questionário socrático'; const socSel=document.createElement('select'); ['nao','sim'].forEach(v=>{ const o=document.createElement('option'); o.value=v; o.textContent=v; socSel.appendChild(o) }); socWrap.appendChild(sl2); socWrap.appendChild(socSel); aGrid.appendChild(socWrap)
+  const notes = af('Observações e objetivos da semana','textarea')
+  const assignActions = document.createElement('div'); assignActions.className='actions'
+  const aSave = document.createElement('button'); aSave.className='btn success'; aSave.textContent='Salvar plano semanal'
+  const aPDF = document.createElement('button'); aPDF.className='btn'; aPDF.textContent='Gerar PDF de exercícios'
+  const buildAssignment = () => ({ weekStart: wkStart.value, modules: { social: ssSel.value==='sim', relax: relaxSel.value==='sim', activation: actSel.value==='sim', rpd: rpdSel.value==='sim', socratic: socSel.value==='sim' }, notes: notes.value })
+  aSave.addEventListener('click', () => { const assigns = store.load('assignments'); assigns.push({ id: uid(), patientId: sel.value, timestamp: Date.now(), ...buildAssignment() }); store.save('assignments', assigns); alert('Plano semanal salvo') })
+  aPDF.addEventListener('click', () => { const patient = store.load('patients').find(p=>p.id===sel.value); window.exportAssignmentsPDF && window.exportAssignmentsPDF(patient, buildAssignment()) })
+  assignActions.appendChild(aSave); assignActions.appendChild(aPDF)
+  const aList = document.createElement('div'); aList.className='list'
+  const renderAssigns = () => {
+    const rows = store.load('assignments').filter(a=>a.patientId===sel.value)
+    aList.innerHTML=''
+    rows.forEach(a => { const li=document.createElement('div'); li.className='list-item'; const left=document.createElement('div'); left.textContent=`${new Date(a.timestamp).toLocaleDateString()} • início ${a.weekStart || '-'}`; const right=document.createElement('div'); const pdf=document.createElement('button'); pdf.className='btn'; pdf.textContent='PDF'; pdf.addEventListener('click', () => { const patient = store.load('patients').find(p=>p.id===sel.value); window.exportAssignmentsPDF && window.exportAssignmentsPDF(patient, a) }); right.appendChild(pdf); li.appendChild(left); li.appendChild(right); aList.appendChild(li) })
+  }
+  sel.addEventListener('change', renderAssigns)
+  setTimeout(renderAssigns, 0)
+  assignPanel.appendChild(at); assignPanel.appendChild(aGrid); assignPanel.appendChild(assignActions); assignPanel.appendChild(aList)
+  p.appendChild(assignPanel)
   const importPanel = document.createElement('div'); importPanel.className='panel'
   const ilab = document.createElement('div'); ilab.textContent='Importar respostas (JSON) para o paciente selecionado'
   const iwrap = document.createElement('div'); iwrap.className='field'
@@ -757,7 +1027,10 @@ function renderRelatorios() {
   const adhBox = document.createElement('div'); adhBox.className='chart-box compact'; const adhCanvas=document.createElement('canvas'); adhBox.appendChild(adhCanvas)
   const adhApproachBox = document.createElement('div'); adhApproachBox.className='chart-box compact'; const adhApproachCanvas=document.createElement('canvas'); adhApproachBox.appendChild(adhApproachCanvas)
   const burnBox = document.createElement('div'); burnBox.className='chart-box compact'; const burnCanvas=document.createElement('canvas'); burnBox.appendChild(burnCanvas)
-  sessionsWrap.appendChild(slTitle); sessionsWrap.appendChild(sGrid); sessionsWrap.appendChild(sActions); sessionsWrap.appendChild(sList); sessionsWrap.appendChild(sChartBox); sessionsWrap.appendChild(taskChartBox); sessionsWrap.appendChild(adhBox); sessionsWrap.appendChild(adhApproachBox); sessionsWrap.appendChild(burnBox)
+  sessionsWrap.appendChild(slTitle); sessionsWrap.appendChild(sGrid); sessionsWrap.appendChild(sActions); sessionsWrap.appendChild(sList)
+  const sessCharts = document.createElement('div'); sessCharts.className='grid cols-3'
+  sessCharts.appendChild(sChartBox); sessCharts.appendChild(taskChartBox); sessCharts.appendChild(adhBox); sessCharts.appendChild(adhApproachBox); sessCharts.appendChild(burnBox)
+  sessionsWrap.appendChild(sessCharts)
   ;[sChartBox, taskChartBox, adhBox, adhApproachBox, burnBox].forEach(b => b.classList.add('compact'))
   p.appendChild(sessionsWrap)
   const repManage = document.createElement('div'); repManage.className='panel'
@@ -857,6 +1130,56 @@ function renderRelatorios() {
   sel.addEventListener('change', () => renderSessions())
   setTimeout(() => renderSessions(), 0)
   return p
+}
+
+async function backupToCloud(payload) {
+  try {
+    const s = store.load('cloudSettings') || {}
+    const d = new Date(); const yyyy = d.getFullYear(); const mm = String(d.getMonth()+1).padStart(2,'0'); const dd = String(d.getDate()).padStart(2,'0')
+    const name = `backup_tcc_gestor_${yyyy}${mm}${dd}.json`
+    if (s.type === 'webdav') {
+      const base = (s.endpoint || '').replace(/\/$/, '')
+      const path = (s.path || '').replace(/^\//, '')
+      const url = [base, path, name].filter(Boolean).join('/')
+      const auth = btoa(`${s.user || ''}:${s.pass || ''}`)
+      const res = await fetch(url, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Basic ${auth}` }, body: JSON.stringify(payload) })
+      if (!res.ok) return false
+      if (s.latest) {
+        const latestUrl = [base, path, 'backup_tcc_gestor_latest.json'].filter(Boolean).join('/')
+        const res2 = await fetch(latestUrl, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Basic ${auth}` }, body: JSON.stringify(payload) })
+        if (!res2.ok) return false
+      }
+      return true
+    }
+    if (s.type === 'http_post') {
+      const url = s.endpoint || ''
+      if (!url) return false
+      const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ filename: name, data: payload }) })
+      if (!res.ok) return false
+      if (s.latest) {
+        const res2 = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ filename: 'backup_tcc_gestor_latest.json', data: payload }) })
+        if (!res2.ok) return false
+      }
+      return true
+    }
+    return false
+  } catch { return false }
+}
+
+async function importFromCloud() {
+  try {
+    const s = store.load('cloudSettings') || {}
+    if (s.type === 'webdav') {
+      const base = (s.endpoint || '').replace(/\/$/, '')
+      const path = (s.path || '').replace(/^\//, '')
+      const url = [base, path, 'backup_tcc_gestor_latest.json'].filter(Boolean).join('/')
+      const auth = btoa(`${s.user || ''}:${s.pass || ''}`)
+      const res = await fetch(url, { headers: { 'Authorization': `Basic ${auth}` } })
+      if (!res.ok) return null
+      return await res.json()
+    }
+    return null
+  } catch { return null }
 }
 
 window.addEventListener('DOMContentLoaded', navInit)

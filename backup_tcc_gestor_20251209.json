@@ -1,0 +1,123 @@
+{
+  "patients": [
+    {
+      "id": "mf1jp0tgr9",
+      "timestamp": 1764892800000,
+      "registeredAt": "2025-12-05",
+      "name": "Fernanda Pereira Marques",
+      "dob": "1986-11-15",
+      "sex": "F",
+      "marital_status": "casada",
+      "contact": "99 98113-2906",
+      "type": "individual",
+      "partnerName": "Andre Marques",
+      "partnerId": "",
+      "chiefComplaint": "controle emocional, desenquilibrio em situaçoes adversas"
+    }
+  ],
+  "anamneses": [],
+  "entries": [
+    {
+      "id": "3tkp9zxobqb",
+      "patientId": "mf1jp0tgr9",
+      "timestamp": 1765329280975,
+      "assessment": {
+        "BAI": {
+          "values": [
+            0,
+            2,
+            2,
+            1,
+            1,
+            0,
+            0,
+            0,
+            1,
+            2,
+            0,
+            0,
+            1,
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+            2,
+            0
+          ],
+          "total": 14,
+          "nivel": "Leve"
+        },
+        "BDI": {
+          "values": [],
+          "total": 0,
+          "nivel": "Mínimo"
+        },
+        "PSS10": {
+          "values": [],
+          "total": 0,
+          "nivel": "Baixo"
+        },
+        "PSS14": {
+          "values": [],
+          "total": 0,
+          "nivel": "Baixo"
+        },
+        "ROSENBERG": {
+          "values": [],
+          "total": 0,
+          "nivel": "Baixa"
+        },
+        "YSQ": {
+          "values": [],
+          "total": 0,
+          "nivel": "Baixo"
+        },
+        "QEP": {
+          "values": [],
+          "total": 0,
+          "nivel": "Baixo"
+        },
+        "RIED": {
+          "values": [],
+          "total": 0,
+          "nivel": "Baixo"
+        }
+      },
+      "predictive": {
+        "anxietyRisk": "Baixo",
+        "depressionRisk": "Baixo",
+        "stressRisk": "Baixo",
+        "selfEsteemLevel": "Baixa",
+        "composite": 31,
+        "focus": "Autoestima: crenças centrais e experimentos de domínio",
+        "flags": [
+          "Trabalho de crenças centrais e experimentos comportamentais de competência"
+        ]
+      },
+      "note": "observar os pesos no "
+    }
+  ],
+  "goals": [
+    {
+      "id": "0b1e6y0yheld",
+      "patientId": "mf1jp0tgr9",
+      "title": "desenvolver controle e confiança no aspecto situacional ",
+      "indicator": "",
+      "due": "2025-05-12",
+      "status": "em_progresso",
+      "timestamp": 1765329412263
+    }
+  ],
+  "sessions": [],
+  "reports": [
+    {
+      "id": "baoxn18cmr",
+      "patientId": "mf1jp0tgr9",
+      "timestamp": 1765329302173,
+      "approach": "Autoestima: crenças centrais e experimentos de domínio",
+      "text": "Relatório IA (TCC)\nPaciente: Fernanda Pereira Marques\nAtendimento: individual\nQueixa: controle emocional, desenquilibrio em situaçoes adversas\nResumo de escalas:\n• BAI: 14 (Leve)\n• BDI: 0 (Mínimo)\n• PSS: 0\n• Rosenberg: 0 (Baixa)\nAnálise preditiva:\n• Composto: 31\n• Ansiedade: Baixo\n• Depressão: Baixo\n• Estresse: Baixo\n• Autoestima: Baixa\n• Foco TCC: Autoestima: crenças centrais e experimentos de domínio\nIntervenções sugeridas:\n• Trabalho de crenças centrais e experimentos comportamentais de competência\nPlano sugerido:\n• Metas SMART vinculadas à queixa principal e riscos\n• Tarefas: exposição graduada, ativação comportamental e técnicas cognitivas\n• Monitoramento de sono, rotina e estressores se aplicável\n• Treino de habilidades sociais/autoafirmação quando pertinente"
+    }
+  ]
+}
