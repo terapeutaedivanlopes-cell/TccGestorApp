@@ -8,6 +8,9 @@ function uid() { return Math.random().toString(36).slice(2) }
 function render(view) {
   const root = document.getElementById('view-container')
   root.innerHTML = ''
+  const titleMap = { cadastro:'Cadastro', pacientes:'Pacientes', anamnese:'Anamnese', escalas:'Escalas', historico:'Histórico', relatorio:'Relatórios', coleta:'Coleta Online' }
+  const h = document.createElement('div'); h.className='page-title'; h.textContent = titleMap[view] || view
+  root.appendChild(h)
   if (view === 'cadastro') root.appendChild(renderCadastro())
   if (view === 'pacientes') root.appendChild(renderPacientes())
   if (view === 'anamnese') root.appendChild(renderAnamnese())
@@ -73,7 +76,7 @@ function navInit() {
   }
   const qs = new URLSearchParams(window.location.search)
   if (qs.get('collect') === '1') { const nav = document.querySelector('.nav'); if (nav) nav.style.display='none'; render('coleta') }
-  else render('cadastro')
+  else { render('cadastro'); const btn=document.querySelector('.nav button[data-view="cadastro"]'); if (btn) btn.classList.add('active') }
 }
 
 function renderCadastro() {
@@ -775,9 +778,9 @@ function renderRelatorios() {
   const iaBox = document.createElement('div'); iaBox.className='list'
   iaPanel.appendChild(iaTitle); iaPanel.appendChild(iaBox); p.appendChild(iaPanel)
   const approachWrap = document.createElement('div'); approachWrap.className='field'
-  const al = document.createElement('label'); al.textContent='Abordagem de tratamento'
+  const approachLabel = document.createElement('label'); approachLabel.textContent='Abordagem de tratamento'
   const asel = document.createElement('select'); ['TCC padrão','Ansiedade','Depressão','Estresse','Casais'].forEach(v=>{ const o=document.createElement('option'); o.value=v; o.textContent=v; asel.appendChild(o) })
-  approachWrap.appendChild(al); approachWrap.appendChild(asel); p.appendChild(approachWrap)
+  approachWrap.appendChild(approachLabel); approachWrap.appendChild(asel); p.appendChild(approachWrap)
   const generate = document.createElement('button'); generate.className='btn primary'; generate.textContent='Gerar relatório geral'
   const out = document.createElement('div'); out.className='panel'
   const outFieldWrap = document.createElement('div'); outFieldWrap.className='field'
@@ -946,7 +949,7 @@ function renderRelatorios() {
   const wkStart = af('Início da semana','date')
   const ssWrap = document.createElement('div'); ssWrap.className='field'; const ssl=document.createElement('label'); ssl.textContent='Habilidades sociais / assertividade'; const ssSel=document.createElement('select'); ['nao','sim'].forEach(v=>{ const o=document.createElement('option'); o.value=v; o.textContent=v; ssSel.appendChild(o) }); ssWrap.appendChild(ssl); ssWrap.appendChild(ssSel); aGrid.appendChild(ssWrap)
   const relaxWrap = document.createElement('div'); relaxWrap.className='field'; const rl=document.createElement('label'); rl.textContent='Relaxamento / Mindfulness'; const relaxSel=document.createElement('select'); ['nao','sim'].forEach(v=>{ const o=document.createElement('option'); o.value=v; o.textContent=v; relaxSel.appendChild(o) }); relaxWrap.appendChild(rl); relaxWrap.appendChild(relaxSel); aGrid.appendChild(relaxWrap)
-  const actWrap = document.createElement('div'); actWrap.className='field'; const al=document.createElement('label'); al.textContent='Ativação comportamental / agendamento'; const actSel=document.createElement('select'); ['nao','sim'].forEach(v=>{ const o=document.createElement('option'); o.value=v; o.textContent=v; actSel.appendChild(o) }); actWrap.appendChild(al); actWrap.appendChild(actSel); aGrid.appendChild(actWrap)
+  const actWrap = document.createElement('div'); actWrap.className='field'; const actLabel=document.createElement('label'); actLabel.textContent='Ativação comportamental / agendamento'; const actSel=document.createElement('select'); ['nao','sim'].forEach(v=>{ const o=document.createElement('option'); o.value=v; o.textContent=v; actSel.appendChild(o) }); actWrap.appendChild(actLabel); actWrap.appendChild(actSel); aGrid.appendChild(actWrap)
   const rpdWrap = document.createElement('div'); rpdWrap.className='field'; const rl2=document.createElement('label'); rl2.textContent='RPD (registro de pensamentos)'; const rpdSel=document.createElement('select'); ['nao','sim'].forEach(v=>{ const o=document.createElement('option'); o.value=v; o.textContent=v; rpdSel.appendChild(o) }); rpdWrap.appendChild(rl2); rpdWrap.appendChild(rpdSel); aGrid.appendChild(rpdWrap)
   const socWrap = document.createElement('div'); socWrap.className='field'; const sl2=document.createElement('label'); sl2.textContent='Questionário socrático'; const socSel=document.createElement('select'); ['nao','sim'].forEach(v=>{ const o=document.createElement('option'); o.value=v; o.textContent=v; socSel.appendChild(o) }); socWrap.appendChild(sl2); socWrap.appendChild(socSel); aGrid.appendChild(socWrap)
   const notes = af('Observações e objetivos da semana','textarea')
